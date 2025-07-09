@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -48,6 +49,7 @@ func (h *Handler) GetMetadata(w http.ResponseWriter, r *http.Request) {
 
 // GetMetadata handles GET /metadata requests
 func (h *Handler) GetMetadata1(c *gin.Context) {
+	fmt.Println("isnide GetMetadata1")
 	id := c.Query("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id isn't presents"})

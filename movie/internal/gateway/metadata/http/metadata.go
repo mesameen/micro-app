@@ -5,28 +5,36 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 
 	"github.com/mesameen/micro-app/metadata/pkg/model"
 	"github.com/mesameen/micro-app/movie/internal/gateway"
-	"github.com/mesameen/micro-app/movie/internal/logger"
+	"github.com/mesameen/micro-app/pkg/discovery"
+	"github.com/mesameen/micro-app/pkg/logger"
 )
 
 // Gateway defines a movie metadata HTTP gateway
 type Gateway struct {
-	addr string
+	registry discovery.Registry
 }
 
 // New creates a new HTTP gateway for a movie metadata service
-func New(addr string) *Gateway {
+func New(registry discovery.Registry) *Gateway {
 	return &Gateway{
-		addr: addr,
+		registry: registry,
 	}
 }
 
 // Get gets movie metadata by movie id
-func (g *Gateway) Get(ctx context.Context, id string) (*model.Metadata, error) {
-	req, err := http.NewRequest(http.MethodGet, g.addr+"/metadata", nil)
+func (g *Gateway) GetMovieDetails(ctx context.Context, id string) (*model.Metadata, error) {
+	addrs, err := g.registry.ServiceAddresses(ctx, "metadata")
+	if err != nil {
+		return nil, err
+	}
+	url := "http://" + addrs[rand.Intn(len(addrs))] + "/metadata"
+	logger.Infof("URL to get movie metadata: %s", url)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
