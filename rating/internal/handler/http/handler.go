@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mesameen/micro-app/rating/internal/controller/rating"
 	"github.com/mesameen/micro-app/rating/internal/logger"
-	"github.com/mesameen/micro-app/rating/internal/model"
+	"github.com/mesameen/micro-app/rating/pkg/model"
 )
 
 // Handler defines a rating service controller

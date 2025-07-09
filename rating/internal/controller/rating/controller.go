@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/mesameen/micro-app/rating/internal/model"
 	"github.com/mesameen/micro-app/rating/internal/repository"
+	"github.com/mesameen/micro-app/rating/pkg/model"
 )
 
 // ErrNotFound is returned when no ratings are found for a record

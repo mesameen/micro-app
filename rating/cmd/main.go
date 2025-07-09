@@ -31,15 +31,15 @@ func main() {
 	router.GET("/rating", h.GetRatings)
 	router.PUT("/rating", h.SaveRatings)
 	server := http.Server{
-		Addr:    ":8090",
+		Addr:    ":8092",
 		Handler: router,
 	}
 	go func() {
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Errorf("Failed to start the server. Error: %v", err)
+			logger.Panicf("Failed to start the server. Error: %v", err)
 		}
 	}()
-	logger.Infof("Server is up and running on: 8090")
+	logger.Infof("Server is up and running on: 8092")
 	<-ctx.Done()
 	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer timeoutCancel()
@@ -47,5 +47,4 @@ func main() {
 		logger.Errorf("Failed to shutdown server. Error: %v", err)
 	}
 	logger.Infof("Server shutdown gracefully")
-
 }

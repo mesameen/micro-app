@@ -3,8 +3,8 @@ package inmemory
 import (
 	"context"
 
-	"github.com/mesameen/micro-app/rating/internal/model"
 	"github.com/mesameen/micro-app/rating/internal/repository"
+	"github.com/mesameen/micro-app/rating/pkg/model"
 )
 
 // Repository defines a rating repository

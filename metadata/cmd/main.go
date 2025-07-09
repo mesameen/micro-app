@@ -30,7 +30,7 @@ func main() {
 	router := gin.Default()
 	router.GET("/metadata", h.GetMetadata1)
 	server := http.Server{
-		Addr:    ":8090",
+		Addr:    ":8091",
 		Handler: router,
 	}
 	go func() {
@@ -38,7 +38,7 @@ func main() {
 			logger.Errorf("Failed to start the server. Error: %v", err)
 		}
 	}()
-	logger.Infof("Server is up and running on: 8090")
+	logger.Infof("Server is up and running on: 8091")
 	<-ctx.Done()
 	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer timeoutCancel()
