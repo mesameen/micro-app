@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mesameen/micro-app/movie/internal/controller/movie"
+	"github.com/mesameen/micro-app/pkg/logger"
 )
 
 // Handler defines a movie handler
@@ -28,6 +29,7 @@ func (h *Handler) GetMovieDetails(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "movie not found"})
 		return
 	} else if err != nil {
+		logger.Errorf("Failed to get movie details. Error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}

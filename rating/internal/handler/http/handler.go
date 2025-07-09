@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mesameen/micro-app/pkg/logger"
 	"github.com/mesameen/micro-app/rating/internal/controller/rating"
-	"github.com/mesameen/micro-app/rating/internal/logger"
 	"github.com/mesameen/micro-app/rating/pkg/model"
 )
 

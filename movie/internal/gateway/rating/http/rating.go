@@ -4,23 +4,25 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"strconv"
 
 	"github.com/mesameen/micro-app/movie/internal/gateway"
-	"github.com/mesameen/micro-app/movie/internal/logger"
+	"github.com/mesameen/micro-app/pkg/discovery"
+	"github.com/mesameen/micro-app/pkg/logger"
 	"github.com/mesameen/micro-app/rating/pkg/model"
 )
 
 // Gateway defines an HTTP gateway to rating service
 type Gateway struct {
-	addr string
+	registry discovery.Registry
 }
 
 // New creates a new HTTP gateway for a rating service
-func New(addr string) *Gateway {
+func New(registry discovery.Registry) *Gateway {
 	return &Gateway{
-		addr: addr,
+		registry: registry,
 	}
 }
 
@@ -31,7 +33,12 @@ func (g *Gateway) GetAggregatedRating(
 	recordID model.RecordID,
 	recordType model.RecordType,
 ) (float64, error) {
-	req, err := http.NewRequest(http.MethodGet, g.addr+"/rating", nil)
+	addrs, err := g.registry.ServiceAddresses(ctx, "rating")
+	if err != nil {
+		return 0, err
+	}
+	url := "http://" + addrs[rand.Intn(len(addrs))] + "/rating"
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return 0, err
 	}
@@ -69,7 +76,12 @@ func (g *Gateway) PutRating(
 	recordType model.RecordType,
 	rating *model.Rating,
 ) error {
-	req, err := http.NewRequest(http.MethodPut, g.addr+"/rating", nil)
+	addrs, err := g.registry.ServiceAddresses(ctx, "rating")
+	if err != nil {
+		return err
+	}
+	url := "http://" + addrs[rand.Intn(len(addrs))] + "/rating"
+	req, err := http.NewRequest(http.MethodPut, url, nil)
 	if err != nil {
 		return err
 	}
