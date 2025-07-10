@@ -2,22 +2,22 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
+	"net"
 	"os"
 	"os/signal"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/mesameen/micro-app/pkg/discovery"
 	"github.com/mesameen/micro-app/pkg/discovery/consulimpl"
 	"github.com/mesameen/micro-app/pkg/logger"
 	"github.com/mesameen/micro-app/rating/internal/controller/rating"
-	httpHandler "github.com/mesameen/micro-app/rating/internal/handler/http"
+	grpcHandler "github.com/mesameen/micro-app/rating/internal/handler/grpc"
 	"github.com/mesameen/micro-app/rating/internal/repository/inmemory"
+	"github.com/mesameen/micro-app/src/api/gen"
+	"google.golang.org/grpc"
 )
 
 const serviceName = "rating"
@@ -31,8 +31,10 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
+
 	registry, err := consulimpl.NewRegistry("localhost:8500")
 	if err != nil {
 		logger.Panicf("Failed to connect to service registry. Error: %v", err)
@@ -55,28 +57,46 @@ func main() {
 		}
 	}()
 	defer registry.Deregister(ctx, instanceID, serviceName)
+
 	repo := inmemory.New()
 	ctrl := rating.New(repo)
-	h := httpHandler.New(ctrl)
-	router := gin.Default()
-	router.GET("/rating", h.GetRatings)
-	router.PUT("/rating", h.SaveRatings)
-	server := http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
-		Handler: router,
+	h := grpcHandler.New(ctrl)
+	lis, err := net.Listen("tcp", "localhost:8092")
+	if err != nil {
+		logger.Panicf("Failed to listen on 8092. Error: %v", err)
 	}
+	srv := grpc.NewServer()
+	gen.RegisterRatingServiceServer(srv, h)
 	go func() {
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Panicf("Failed to start the server. Error: %v", err)
+		logger.Infof("%s service is up and running on :8092", serviceName)
+		if err := srv.Serve(lis); err != nil {
+			logger.Panicf("Failed to sert grpc server. Error: %v", err)
 		}
 	}()
-	logger.Infof("Rating service is up and running on: %d", port)
 	<-ctx.Done()
-	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer timeoutCancel()
-	if err := server.Shutdown(timeoutCtx); err != nil {
-		logger.Errorf("Failed to shutdown server. Error: %v", err)
-		return
-	}
+	// do graceful shutdown
+	srv.GracefulStop()
+	// Commented out to start the service as HTTP server
+	// router := gin.Default()
+	// router.GET("/rating", h.GetRatings)
+	// router.PUT("/rating", h.SaveRatings)
+	// server := http.Server{
+	// 	Addr:    fmt.Sprintf(":%d", port),
+	// 	Handler: router,
+	// }
+	// go func() {
+	// 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	// 		logger.Panicf("Failed to start the server. Error: %v", err)
+	// 	}
+	// }()
+	// logger.Infof("Rating service is up and running on: %d", port)
+	// <-ctx.Done()
+	// timeoutCtx, timeoutCancel := context.WithTimeout(ctx, 5*time.Second)
+	// defer timeoutCancel()
+	// if err := server.Shutdown(timeoutCtx); err != nil {
+	// 	logger.Errorf("Failed to shutdown server. Error: %v", err)
+	// 	return
+	// }
+
 	logger.Infof("Server shutdown gracefully")
 }

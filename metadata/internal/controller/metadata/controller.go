@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/mesameen/micro-app/metadata/internal/constants"
+	"github.com/mesameen/micro-app/metadata/internal/repository"
 	"github.com/mesameen/micro-app/metadata/pkg/model"
 )
+
+// ErrNotFound is returned when a  requested resource not found
+var ErrNotFound = errors.New("not found")
 
 type metadataRepository interface {
 	Get(ctx context.Context, id string) (*model.Metadata, error)
@@ -26,8 +29,8 @@ func New(repo metadataRepository) *Controller {
 
 func (c *Controller) Get(ctx context.Context, id string) (*model.Metadata, error) {
 	res, err := c.repo.Get(ctx, id)
-	if err != nil && errors.Is(err, constants.ErrNotFound) {
-		return nil, constants.ErrNotFound
+	if err != nil && errors.Is(err, repository.ErrNotFound) {
+		return nil, ErrNotFound
 	}
 	return res, err
 }
