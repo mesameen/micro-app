@@ -13,8 +13,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mesameen/micro-app/movie/internal/controller/movie"
-	metadataService "github.com/mesameen/micro-app/movie/internal/gateway/metadata/http"
-	ratingService "github.com/mesameen/micro-app/movie/internal/gateway/rating/http"
+	metadataService "github.com/mesameen/micro-app/movie/internal/gateway/metadata/grpc"
+	ratingService "github.com/mesameen/micro-app/movie/internal/gateway/rating/grpc"
 	httpHandler "github.com/mesameen/micro-app/movie/internal/handler/http"
 	"github.com/mesameen/micro-app/pkg/discovery"
 	"github.com/mesameen/micro-app/pkg/discovery/consulimpl"
