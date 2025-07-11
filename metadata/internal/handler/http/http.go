@@ -6,17 +6,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mesameen/micro-app/metadata/internal/controller/metadata"
+	"github.com/mesameen/micro-app/metadata/internal/controller"
 	"github.com/mesameen/micro-app/metadata/internal/repository"
 )
 
 // Handler defines a movie metadata HTTP handler
 type Handler struct {
-	ctrl *metadata.Controller
+	ctrl *controller.Controller
 }
 
 // New creates a new movie metadata HTTP handler
-func New(ctrl *metadata.Controller) *Handler {
+func New(ctrl *controller.Controller) *Handler {
 	return &Handler{
 		ctrl: ctrl,
 	}

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/mesameen/micro-app/metadata/pkg/model"
-	"github.com/mesameen/micro-app/pkg/discovery"
 	"github.com/mesameen/micro-app/src/api/gen"
+	"github.com/mesameen/micro-app/src/pkg/discovery"
 	"github.com/mesameen/micro-app/src/pkg/grpcutil"
 )
 

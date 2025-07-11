@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 
-	"github.com/mesameen/micro-app/pkg/discovery"
+	"github.com/mesameen/micro-app/src/pkg/discovery"
 )
 
 // ServiceConnection attempts to select a random service

@@ -9,9 +9,9 @@ import (
 	"strconv"
 
 	"github.com/mesameen/micro-app/movie/internal/gateway"
-	"github.com/mesameen/micro-app/pkg/discovery"
-	"github.com/mesameen/micro-app/pkg/logger"
 	"github.com/mesameen/micro-app/rating/pkg/model"
+	"github.com/mesameen/micro-app/src/pkg/discovery"
+	"github.com/mesameen/micro-app/src/pkg/logger"
 )
 
 // Gateway defines an HTTP gateway to rating service

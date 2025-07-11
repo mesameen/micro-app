@@ -10,13 +10,13 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/mesameen/micro-app/metadata/internal/controller/metadata"
+	"github.com/mesameen/micro-app/metadata/internal/controller"
 	grpchandler "github.com/mesameen/micro-app/metadata/internal/handler/grpc"
 	"github.com/mesameen/micro-app/metadata/internal/repository/inmemory"
-	"github.com/mesameen/micro-app/pkg/discovery"
-	"github.com/mesameen/micro-app/pkg/discovery/consulimpl"
-	"github.com/mesameen/micro-app/pkg/logger"
 	"github.com/mesameen/micro-app/src/api/gen"
+	"github.com/mesameen/micro-app/src/pkg/discovery"
+	"github.com/mesameen/micro-app/src/pkg/discovery/consulimpl"
+	"github.com/mesameen/micro-app/src/pkg/logger"
 	"google.golang.org/grpc"
 )
 
@@ -60,7 +60,7 @@ func main() {
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
 	repo := inmemory.New()
-	ctrl := metadata.New(repo)
+	ctrl := controller.New(repo)
 	h := grpchandler.New(ctrl)
 	lis, err := net.Listen("tcp", "localhost:8091")
 	if err != nil {

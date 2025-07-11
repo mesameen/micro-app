@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/mesameen/micro-app/rating/internal/controller/rating"
+	"github.com/mesameen/micro-app/rating/internal/controller"
 	"github.com/mesameen/micro-app/rating/internal/repository"
 	"github.com/mesameen/micro-app/rating/pkg/model"
 	"github.com/mesameen/micro-app/src/api/gen"
@@ -15,11 +15,11 @@ import (
 // Handler defines a gRPC rating API handler
 type Handler struct {
 	gen.UnimplementedRatingServiceServer
-	ctrl *rating.Controller
+	ctrl *controller.Controller
 }
 
 // New creates a new rating gRPC handler
-func New(ctrl *rating.Controller) *Handler {
+func New(ctrl *controller.Controller) *Handler {
 	return &Handler{
 		ctrl: ctrl,
 	}

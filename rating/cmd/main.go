@@ -10,13 +10,14 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/mesameen/micro-app/pkg/discovery"
-	"github.com/mesameen/micro-app/pkg/discovery/consulimpl"
-	"github.com/mesameen/micro-app/pkg/logger"
-	"github.com/mesameen/micro-app/rating/internal/controller/rating"
+	"github.com/mesameen/micro-app/rating/internal/controller"
 	grpcHandler "github.com/mesameen/micro-app/rating/internal/handler/grpc"
+	"github.com/mesameen/micro-app/rating/internal/ingester/kafka"
 	"github.com/mesameen/micro-app/rating/internal/repository/inmemory"
 	"github.com/mesameen/micro-app/src/api/gen"
+	"github.com/mesameen/micro-app/src/pkg/discovery"
+	"github.com/mesameen/micro-app/src/pkg/discovery/consulimpl"
+	"github.com/mesameen/micro-app/src/pkg/logger"
 	"google.golang.org/grpc"
 )
 
@@ -59,7 +60,16 @@ func main() {
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
 	repo := inmemory.New()
-	ctrl := rating.New(repo)
+	ingester, err := kafka.NewIngester("localhost", "rating-service", "ratings")
+	if err != nil {
+		logger.Panicf("Failed to connect to kafka ingestor. Error:%v", err)
+	}
+	ctrl := controller.New(repo, ingester)
+	go func() {
+		if err := ctrl.StartIngestion(ctx); err != nil {
+			logger.Panicf("Failed to start ingesting kafka events. Error: %v", err)
+		}
+	}()
 	h := grpcHandler.New(ctrl)
 	lis, err := net.Listen("tcp", "localhost:8092")
 	if err != nil {

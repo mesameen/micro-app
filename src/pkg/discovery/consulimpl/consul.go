@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	consul "github.com/hashicorp/consul/api"
-	"github.com/mesameen/micro-app/pkg/discovery"
+	"github.com/mesameen/micro-app/src/pkg/discovery"
 )
 
 // Registry defines a Consul based service registry
