@@ -5,17 +5,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mesameen/micro-app/movie/internal/controller/movie"
-	"github.com/mesameen/micro-app/pkg/logger"
+	"github.com/mesameen/micro-app/movie/internal/controller"
+	"github.com/mesameen/micro-app/src/pkg/logger"
 )
 
 // Handler defines a movie handler
 type Handler struct {
-	ctrl *movie.Controller
+	ctrl *controller.Controller
 }
 
 // New creates a new movie HTTP handler
-func New(ctrl *movie.Controller) *Handler {
+func New(ctrl *controller.Controller) *Handler {
 	return &Handler{
 		ctrl: ctrl,
 	}
@@ -25,7 +25,7 @@ func New(ctrl *movie.Controller) *Handler {
 func (h *Handler) GetMovieDetails(c *gin.Context) {
 	id := c.Query("id")
 	details, err := h.ctrl.Get(c.Request.Context(), id)
-	if err != nil && errors.Is(err, movie.ErrNotFound) {
+	if err != nil && errors.Is(err, controller.ErrNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "movie not found"})
 		return
 	} else if err != nil {

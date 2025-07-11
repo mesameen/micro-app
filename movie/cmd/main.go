@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mesameen/micro-app/movie/internal/controller/movie"
+	"github.com/mesameen/micro-app/movie/internal/controller"
 	metadataService "github.com/mesameen/micro-app/movie/internal/gateway/metadata/grpc"
 	ratingService "github.com/mesameen/micro-app/movie/internal/gateway/rating/grpc"
 	httpHandler "github.com/mesameen/micro-app/movie/internal/handler/http"
-	"github.com/mesameen/micro-app/pkg/discovery"
-	"github.com/mesameen/micro-app/pkg/discovery/consulimpl"
-	"github.com/mesameen/micro-app/pkg/logger"
+	"github.com/mesameen/micro-app/src/pkg/discovery"
+	"github.com/mesameen/micro-app/src/pkg/discovery/consulimpl"
+	"github.com/mesameen/micro-app/src/pkg/logger"
 )
 
 const serviceName = "movie"
@@ -61,7 +61,7 @@ func main() {
 
 	metadataGateway := metadataService.New(registry)
 	ratingGateway := ratingService.New(registry)
-	ctrl := movie.New(ratingGateway, metadataGateway)
+	ctrl := controller.New(ratingGateway, metadataGateway)
 	h := httpHandler.New(ctrl)
 	router := gin.Default()
 	router.GET("/movie", h.GetMovieDetails)

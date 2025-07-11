@@ -6,18 +6,18 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mesameen/micro-app/pkg/logger"
-	"github.com/mesameen/micro-app/rating/internal/controller/rating"
+	"github.com/mesameen/micro-app/rating/internal/controller"
 	"github.com/mesameen/micro-app/rating/pkg/model"
+	"github.com/mesameen/micro-app/src/pkg/logger"
 )
 
 // Handler defines a rating service controller
 type Handler struct {
-	ctrl *rating.Controller
+	ctrl *controller.Controller
 }
 
 // New creates a new rating service HTTP handler
-func New(ctrl *rating.Controller) *Handler {
+func New(ctrl *controller.Controller) *Handler {
 	return &Handler{
 		ctrl: ctrl,
 	}
@@ -28,7 +28,7 @@ func (h *Handler) GetRatings(c *gin.Context) {
 	recordID := model.RecordID(c.Query("id"))
 	recordType := model.RecordType(c.Query("type"))
 	val, err := h.ctrl.GetAggregatedRating(c.Request.Context(), recordID, recordType)
-	if err != nil && errors.Is(err, rating.ErrNotFound) {
+	if err != nil && errors.Is(err, controller.ErrNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 		return
 	} else if err != nil {
