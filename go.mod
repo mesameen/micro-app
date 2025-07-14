@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/gin-gonic/gin v1.10.1
+	github.com/go-sql-driver/mysql v1.9.3
 	github.com/hashicorp/consul/api v1.32.1
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.73.0
@@ -12,6 +13,7 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect

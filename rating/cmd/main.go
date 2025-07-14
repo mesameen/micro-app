@@ -13,7 +13,7 @@ import (
 	"github.com/mesameen/micro-app/rating/internal/controller"
 	grpcHandler "github.com/mesameen/micro-app/rating/internal/handler/grpc"
 	"github.com/mesameen/micro-app/rating/internal/ingester/kafka"
-	"github.com/mesameen/micro-app/rating/internal/repository/inmemory"
+	"github.com/mesameen/micro-app/rating/internal/repository/mysql"
 	"github.com/mesameen/micro-app/src/api/gen"
 	"github.com/mesameen/micro-app/src/pkg/discovery"
 	"github.com/mesameen/micro-app/src/pkg/discovery/consulimpl"
@@ -59,7 +59,10 @@ func main() {
 	}()
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
-	repo := inmemory.New()
+	repo, err := mysql.New()
+	if err != nil {
+		logger.Panicf("%v", err)
+	}
 	ingester, err := kafka.NewIngester("localhost", "rating-service", "ratings")
 	if err != nil {
 		logger.Panicf("Failed to connect to kafka ingestor. Error:%v", err)

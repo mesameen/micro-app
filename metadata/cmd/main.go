@@ -13,6 +13,7 @@ import (
 	"github.com/mesameen/micro-app/metadata/internal/controller"
 	grpchandler "github.com/mesameen/micro-app/metadata/internal/handler/grpc"
 	"github.com/mesameen/micro-app/metadata/internal/repository/inmemory"
+	"github.com/mesameen/micro-app/metadata/internal/repository/mysql"
 	"github.com/mesameen/micro-app/src/api/gen"
 	"github.com/mesameen/micro-app/src/pkg/discovery"
 	"github.com/mesameen/micro-app/src/pkg/discovery/consulimpl"
@@ -59,8 +60,12 @@ func main() {
 	// deregistering instance of the metada service
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
-	repo := inmemory.New()
-	ctrl := controller.New(repo)
+	repo, err := mysql.New()
+	if err != nil {
+		logger.Panicf("%v", err)
+	}
+	cache := inmemory.New()
+	ctrl := controller.New(repo, cache)
 	h := grpchandler.New(ctrl)
 	lis, err := net.Listen("tcp", "localhost:8091")
 	if err != nil {

@@ -47,7 +47,7 @@ func (h *Handler) PutRating(ctx context.Context, req *gen.PutRatingRequest) (*ge
 		return nil, status.Error(codes.InvalidArgument, "req is empty or userID or record is empty")
 	}
 	if err := h.ctrl.PutRating(ctx, model.RecordID(req.RecordId), model.RecordType(req.RecordType), &model.Rating{
-		UserID: model.UserID(req.RecordId),
+		UserID: model.UserID(req.UserId),
 		Value:  model.RatingValue(req.RatingValue),
 	}); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
