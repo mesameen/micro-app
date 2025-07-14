@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mesameen/micro-app/pkg/discovery"
-	"github.com/mesameen/micro-app/pkg/logger"
+	"github.com/mesameen/micro-app/src/pkg/discovery"
+	"github.com/mesameen/micro-app/src/pkg/logger"
 )
 
 // Registry defines in memory registry
