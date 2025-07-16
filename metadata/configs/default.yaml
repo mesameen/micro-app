@@ -1,0 +1,7 @@
+api:
+  port: 8091
+
+serviceDiscovery:
+  consul:
+    address: http://consul-server.consul.svc.cluster.local:8500
+    # address: http://localhost:8500

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -19,28 +18,36 @@ import (
 	"github.com/mesameen/micro-app/src/pkg/discovery/consulimpl"
 	"github.com/mesameen/micro-app/src/pkg/logger"
 	"google.golang.org/grpc"
+	"gopkg.in/yaml.v3"
 )
 
 const serviceName = "metadata"
 
 func main() {
-	var port int
-	flag.IntVar(&port, "port", 8091, "API handler port")
-	flag.Parse()
 	log.Println("Starting the movie metadata service")
-	err := logger.Init()
+	f, err := os.Open("default.yaml")
+	if err != nil {
+		log.Panic(err)
+	}
+	defer f.Close()
+	var cfg config
+	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
+		log.Panic(err)
+	}
+	fmt.Printf("cfg : %+v\n", cfg)
+	err = logger.Init()
 	if err != nil {
 		log.Panic(err)
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	registry, err := consulimpl.NewRegistry("localhost:8500")
+	registry, err := consulimpl.NewRegistry(cfg.ServiceDiscovery.Consul.Address)
 	if err != nil {
 		logger.Panicf("unable to connect to service registry. Error: %v", err)
 	}
 	instanceID := discovery.GenerateInstanceID(serviceName)
-	if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", port)); err != nil {
+	if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("metadata:%d", cfg.API.Port)); err != nil {
 		logger.Panicf("Failed to register instance %s of service %s to service registry", instanceID, serviceName)
 	}
 	go func() {
@@ -67,14 +74,14 @@ func main() {
 	cache := inmemory.New()
 	ctrl := controller.New(repo, cache)
 	h := grpchandler.New(ctrl)
-	lis, err := net.Listen("tcp", "localhost:8091")
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", cfg.API.Port))
 	if err != nil {
-		logger.Panicf("Failed to listen on 8091. Error: %v", err)
+		logger.Panicf("Failed to listen on %d. Error: %v", cfg.API.Port, err)
 	}
 	srv := grpc.NewServer()
 	gen.RegisterMetadataServiceServer(srv, h)
 	go func() {
-		logger.Infof("%s service is up and running on :8091", serviceName)
+		logger.Infof("%s service is up and running on :%d", serviceName, cfg.API.Port)
 		if err := srv.Serve(lis); err != nil {
 			logger.Panicf("Failed to sert grpc server. Error: %v", err)
 		}
