@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,27 +18,36 @@ import (
 	"github.com/mesameen/micro-app/src/pkg/discovery"
 	"github.com/mesameen/micro-app/src/pkg/discovery/consulimpl"
 	"github.com/mesameen/micro-app/src/pkg/logger"
+	"gopkg.in/yaml.v3"
 )
 
 const serviceName = "movie"
 
 func main() {
-	var port int
-	flag.IntVar(&port, "port", 8093, "API handler port")
-	flag.Parse()
 	log.Println("Starting the movie service")
-	err := logger.Init()
+	f, err := os.Open("default.yaml")
+	if err != nil {
+		log.Panic(err)
+	}
+	defer f.Close()
+	var cfg config
+	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
+		log.Panic(err)
+	}
+	fmt.Printf("cfg : %+v\n", cfg)
+
+	err = logger.Init()
 	if err != nil {
 		log.Panic(err)
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	registry, err := consulimpl.NewRegistry("localhost:8500")
+	registry, err := consulimpl.NewRegistry(cfg.ServiceDiscovery.Consul.Address)
 	if err != nil {
 		logger.Panicf("unable to connect to service registry. Error: %v", err)
 	}
 	instanceID := discovery.GenerateInstanceID(serviceName)
-	if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", port)); err != nil {
+	if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", cfg.API.Port)); err != nil {
 		logger.Panicf("Failed to register instance %s of service %s to service registry. Error: %v", instanceID, serviceName, err)
 	}
 	go func() {
@@ -67,7 +75,7 @@ func main() {
 	router.GET("/movie", h.GetMovieDetails)
 
 	server := http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
+		Addr:    fmt.Sprintf(":%d", cfg.API.Port),
 		Handler: router,
 	}
 	go func() {
@@ -75,7 +83,7 @@ func main() {
 			logger.Panicf("Failed to start the server. Error: %v", err)
 		}
 	}()
-	logger.Infof("Movie service is up and running on: %d", port)
+	logger.Infof("Movie service is up and running on: %d", cfg.API.Port)
 	<-ctx.Done()
 	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer timeoutCancel()
