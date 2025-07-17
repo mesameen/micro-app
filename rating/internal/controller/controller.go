@@ -57,6 +57,9 @@ func (c *Controller) GetAggregatedRating(
 	} else if err != nil {
 		return 0, err
 	}
+	if len(ratings) == 0 {
+		return 0.0, nil
+	}
 	sum := float64(0)
 	for _, r := range ratings {
 		sum += float64(r.Value)
