@@ -7,6 +7,7 @@ import (
 	"github.com/mesameen/micro-app/src/api/gen"
 	"github.com/mesameen/micro-app/src/pkg/discovery"
 	"github.com/mesameen/micro-app/src/pkg/grpcutil"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Gateway defines an gRPC gateway to rating service
@@ -28,7 +29,7 @@ func (g *Gateway) GetAggregatedRating(
 	recordID model.RecordID,
 	recordType model.RecordType,
 ) (float64, error) {
-	clientConn, err := grpcutil.ServiceConnection(ctx, "metadata", g.registry)
+	clientConn, err := grpcutil.ServiceConnection(ctx, "metadata", g.registry, insecure.NewCredentials())
 	if err != nil {
 		return 0, err
 	}

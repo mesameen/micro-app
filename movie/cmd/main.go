@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"log"
@@ -18,6 +20,7 @@ import (
 	"github.com/mesameen/micro-app/src/pkg/discovery"
 	"github.com/mesameen/micro-app/src/pkg/discovery/consulimpl"
 	"github.com/mesameen/micro-app/src/pkg/logger"
+	"google.golang.org/grpc/credentials"
 	"gopkg.in/yaml.v3"
 )
 
@@ -67,7 +70,21 @@ func main() {
 	// deregistering instance of the metada service
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
-	metadataGateway := metadataService.New(registry)
+	certBytes, err := os.ReadFile("server.crt")
+	if err != nil {
+		log.Fatalf("failed to read server certificate: %v", err)
+	}
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(certBytes) {
+		log.Fatalf("Failed to append server certificate to pool")
+	}
+	cert, err := tls.LoadX509KeyPair("server.crt", "server.key")
+	if err != nil {
+		log.Fatalf("Failed to load key pair: %v", err)
+	}
+	creds := credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{cert}})
+
+	metadataGateway := metadataService.New(registry, creds)
 	ratingGateway := ratingService.New(registry)
 	ctrl := controller.New(ratingGateway, metadataGateway)
 	h := httpHandler.New(ctrl)

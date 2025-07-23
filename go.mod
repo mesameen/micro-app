@@ -6,6 +6,7 @@ require (
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-sql-driver/mysql v1.9.3
+	github.com/golang-jwt/jwt/v5 v5.2.3
 	github.com/hashicorp/consul/api v1.32.1
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/mock v0.5.2

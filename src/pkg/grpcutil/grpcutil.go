@@ -6,18 +6,18 @@ import (
 
 	"github.com/mesameen/micro-app/src/pkg/discovery"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 )
 
 // ServiceConnection attempts to select a random service
 // instance and returns a gRPC connection to it
-func ServiceConnection(ctx context.Context, serviceName string, registry discovery.Registry) (*grpc.ClientConn, error) {
+func ServiceConnection(ctx context.Context, serviceName string, registry discovery.Registry, creds credentials.TransportCredentials) (*grpc.ClientConn, error) {
 	addrs, err := registry.ServiceAddresses(ctx, serviceName)
 	if err != nil {
 		return nil, err
 	}
 	return grpc.NewClient(
 		addrs[rand.Intn(len(addrs))],
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(creds),
 	)
 }

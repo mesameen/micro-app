@@ -49,7 +49,7 @@ func main() {
 		logger.Panicf("Failed to connect to service registry. Error: %v", err)
 	}
 	instanceID := discovery.GenerateInstanceID(serviceName)
-	if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("rating:%d", cfg.API.Port)); err != nil {
+	if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", cfg.API.Port)); err != nil {
 		logger.Panicf("Failed to register instance %s of service %s to service registry", instanceID, serviceName)
 	}
 	go func() {
