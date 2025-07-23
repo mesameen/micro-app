@@ -63,3 +63,4 @@ service MovieService {
   rpc GetMovieDetails(GetMovieDetailsRequest) 
     returns (GetMovieDetailsRespoonse);
 }
+

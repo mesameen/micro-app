@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
@@ -18,6 +19,8 @@ import (
 	"github.com/mesameen/micro-app/src/pkg/discovery/consulimpl"
 	"github.com/mesameen/micro-app/src/pkg/logger"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/reflection"
 	"gopkg.in/yaml.v3"
 )
 
@@ -47,7 +50,7 @@ func main() {
 		logger.Panicf("unable to connect to service registry. Error: %v", err)
 	}
 	instanceID := discovery.GenerateInstanceID(serviceName)
-	if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("metadata:%d", cfg.API.Port)); err != nil {
+	if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", cfg.API.Port)); err != nil {
 		logger.Panicf("Failed to register instance %s of service %s to service registry", instanceID, serviceName)
 	}
 	go func() {
@@ -74,11 +77,22 @@ func main() {
 	cache := inmemory.New()
 	ctrl := controller.New(repo, cache)
 	h := grpchandler.New(ctrl)
+	// adding ca certificate
+	cert, err := tls.LoadX509KeyPair("server.crt", "server.key")
+	if err != nil {
+		log.Fatalf("Failed to load key pair: %v", err)
+	}
+	creds := credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{cert},
+	})
+
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", cfg.API.Port))
 	if err != nil {
 		logger.Panicf("Failed to listen on %d. Error: %v", cfg.API.Port, err)
 	}
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(grpc.Creds(creds))
+	reflection.Register(srv)
+	// srv := grpc.NewServer()
 	gen.RegisterMetadataServiceServer(srv, h)
 	go func() {
 		logger.Infof("%s service is up and running on :%d", serviceName, cfg.API.Port)
