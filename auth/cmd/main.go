@@ -22,7 +22,7 @@ const serviceName = "auth"
 func main() {
 	port := 8094
 	log.Printf("Starting auth service on port: %d", port)
-	err := logger.Init()
+	err := logger.Init(serviceName)
 	if err != nil {
 		log.Panic(err)
 	}

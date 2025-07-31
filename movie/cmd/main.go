@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"fmt"
 	"log"
@@ -17,10 +15,11 @@ import (
 	metadataService "github.com/mesameen/micro-app/movie/internal/gateway/metadata/grpc"
 	ratingService "github.com/mesameen/micro-app/movie/internal/gateway/rating/grpc"
 	httpHandler "github.com/mesameen/micro-app/movie/internal/handler/http"
+	"github.com/mesameen/micro-app/src/pkg/constants"
 	"github.com/mesameen/micro-app/src/pkg/discovery"
 	"github.com/mesameen/micro-app/src/pkg/discovery/consulimpl"
 	"github.com/mesameen/micro-app/src/pkg/logger"
-	"google.golang.org/grpc/credentials"
+	"github.com/mesameen/micro-app/src/pkg/telemetryservice"
 	"gopkg.in/yaml.v3"
 )
 
@@ -39,7 +38,7 @@ func main() {
 	}
 	fmt.Printf("cfg : %+v\n", cfg)
 
-	err = logger.Init()
+	err = logger.Init(serviceName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -70,25 +69,36 @@ func main() {
 	// deregistering instance of the metada service
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
-	certBytes, err := os.ReadFile("server.crt")
-	if err != nil {
-		log.Fatalf("failed to read server certificate: %v", err)
-	}
-	certPool := x509.NewCertPool()
-	if !certPool.AppendCertsFromPEM(certBytes) {
-		log.Fatalf("Failed to append server certificate to pool")
-	}
-	cert, err := tls.LoadX509KeyPair("server.crt", "server.key")
-	if err != nil {
-		log.Fatalf("Failed to load key pair: %v", err)
-	}
-	creds := credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{cert}})
+	// certBytes, err := os.ReadFile("server.crt")
+	// if err != nil {
+	// 	log.Fatalf("failed to read server certificate: %v", err)
+	// }
+	// certPool := x509.NewCertPool()
+	// if !certPool.AppendCertsFromPEM(certBytes) {
+	// 	log.Fatalf("Failed to append server certificate to pool")
+	// }
+	// cert, err := tls.LoadX509KeyPair("server.crt", "server.key")
+	// if err != nil {
+	// 	log.Fatalf("Failed to load key pair: %v", err)
+	// }
+	// creds := credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{cert}})
 
-	metadataGateway := metadataService.New(registry, creds)
+	metadataGateway := metadataService.New(registry, nil)
 	ratingGateway := ratingService.New(registry)
 	ctrl := controller.New(ratingGateway, metadataGateway)
+	// initializing telemetry
+	telem, err := telemetryservice.NewTelemetry(ctx, serviceName, constants.MovieServiceVersion)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer telem.Shutdown(ctx)
+	telem.Infof("telemetry initialized")
+
 	h := httpHandler.New(ctrl)
 	router := gin.Default()
+	router.Use(telem.LogRequest())
+	router.Use(telem.MeterRequestDuration())
+	router.Use(telem.MeterRequestsInFlight())
 	router.GET("/movie", h.GetMovieDetails)
 
 	server := http.Server{

@@ -14,7 +14,7 @@ import (
 
 func main() {
 	fmt.Println("Creating a kafka producer")
-	err := logger.Init()
+	err := logger.Init("test")
 	if err != nil {
 		log.Panic(err)
 	}

@@ -6,14 +6,20 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	FieldService  = "service"
+	FieldEndPoint = "endpoint"
+)
+
 var log *zap.Logger
 
-func Init() error {
+func Init(serviceName string) error {
 	var err error
-	log, err = zap.NewDevelopment()
+	log, err = zap.NewProduction()
 	if err != nil {
 		return err
 	}
+	log = log.With(zap.String(FieldService, serviceName))
 	return nil
 }
 
