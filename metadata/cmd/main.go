@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
@@ -10,6 +9,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/ratelimit"
 	"github.com/mesameen/micro-app/metadata/internal/controller"
 	grpchandler "github.com/mesameen/micro-app/metadata/internal/handler/grpc"
 	"github.com/mesameen/micro-app/metadata/internal/repository/inmemory"
@@ -18,8 +18,8 @@ import (
 	"github.com/mesameen/micro-app/src/pkg/discovery"
 	"github.com/mesameen/micro-app/src/pkg/discovery/consulimpl"
 	"github.com/mesameen/micro-app/src/pkg/logger"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 	"gopkg.in/yaml.v3"
 )
@@ -38,7 +38,7 @@ func main() {
 		log.Panic(err)
 	}
 	fmt.Printf("cfg : %+v\n", cfg)
-	err = logger.Init()
+	err = logger.Init(serviceName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -78,21 +78,22 @@ func main() {
 	ctrl := controller.New(repo, cache)
 	h := grpchandler.New(ctrl)
 	// adding ca certificate
-	cert, err := tls.LoadX509KeyPair("server.crt", "server.key")
-	if err != nil {
-		log.Fatalf("Failed to load key pair: %v", err)
-	}
-	creds := credentials.NewTLS(&tls.Config{
-		Certificates: []tls.Certificate{cert},
-	})
+	// cert, err := tls.LoadX509KeyPair("server.crt", "server.key")
+	// if err != nil {
+	// 	log.Fatalf("Failed to load key pair: %v", err)
+	// }
+	// creds := credentials.NewTLS(&tls.Config{
+	// 	Certificates: []tls.Certificate{cert},
+	// })
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", cfg.API.Port))
 	if err != nil {
 		logger.Panicf("Failed to listen on %d. Error: %v", cfg.API.Port, err)
 	}
-	srv := grpc.NewServer(grpc.Creds(creds))
+	// srv := grpc.NewServer(grpc.Creds(creds))
+	l := newLimiter(100, 100)
+	srv := grpc.NewServer(grpc.UnaryInterceptor(ratelimit.UnaryServerInterceptor(l)))
 	reflection.Register(srv)
-	// srv := grpc.NewServer()
 	gen.RegisterMetadataServiceServer(srv, h)
 	go func() {
 		logger.Infof("%s service is up and running on :%d", serviceName, cfg.API.Port)
@@ -125,4 +126,16 @@ func main() {
 	// }
 
 	logger.Infof("Server shutdown gracefully")
+}
+
+type limiter struct {
+	l *rate.Limiter
+}
+
+func newLimiter(limit, burst int) *limiter {
+	return &limiter{l: rate.NewLimiter(rate.Limit(limit), burst)}
+}
+
+func (l *limiter) Limit() bool {
+	return l.l.Allow()
 }

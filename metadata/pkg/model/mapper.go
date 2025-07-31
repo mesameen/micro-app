@@ -15,7 +15,7 @@ func MetadataToProto(m *Metadata) *gen.Metadata {
 
 // MetadaFromProto coverts a generated proto counterpart
 // into a Metadata struct
-func MetadaFromProto(m *gen.Metadata) *Metadata {
+func MetadataFromProto(m *gen.Metadata) *Metadata {
 	return &Metadata{
 		ID:          m.Id,
 		Title:       m.Title,

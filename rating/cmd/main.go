@@ -36,7 +36,7 @@ func main() {
 	}
 	fmt.Printf("cfg : %+v\n", cfg)
 
-	err = logger.Init()
+	err = logger.Init(serviceName)
 	if err != nil {
 		log.Panic(err)
 	}
