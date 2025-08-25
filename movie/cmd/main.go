@@ -83,18 +83,18 @@ func main() {
 	// }
 	// creds := credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{cert}})
 
-	metadataGateway := metadataService.New(registry, nil)
-	ratingGateway := ratingService.New(registry)
-	ctrl := controller.New(ratingGateway, metadataGateway)
 	// initializing telemetry
 	telem, err := telemetryservice.NewTelemetry(ctx, serviceName, constants.MovieServiceVersion)
 	if err != nil {
 		log.Panic(err)
 	}
 	defer telem.Shutdown(ctx)
-	telem.Infof("telemetry initialized")
+	telem.Infof(ctx, "telemetry initialized")
 
-	h := httpHandler.New(ctrl)
+	metadataGateway := metadataService.New(registry, nil)
+	ratingGateway := ratingService.New(registry)
+	ctrl := controller.New(telem, ratingGateway, metadataGateway)
+	h := httpHandler.New(telem, ctrl)
 	router := gin.Default()
 	router.Use(telem.LogRequest())
 	router.Use(telem.MeterRequestDuration())

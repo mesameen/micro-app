@@ -8,6 +8,7 @@ import (
 	"github.com/mesameen/micro-app/movie/internal/gateway"
 	"github.com/mesameen/micro-app/movie/pkg/model"
 	ratingModel "github.com/mesameen/micro-app/rating/pkg/model"
+	"github.com/mesameen/micro-app/src/pkg/telemetryservice"
 )
 
 // ErrNotFound is returned when the movie metadata is not found
@@ -33,13 +34,15 @@ type metadataGateway interface {
 
 // Controller defines a movie service controller
 type Controller struct {
+	telem           telemetryservice.Repo
 	ratingGateway   ratingGateway
 	metadataGateway metadataGateway
 }
 
 // New creates a new movie service controller
-func New(ratingGateway ratingGateway, metadataGateway metadataGateway) *Controller {
+func New(telem telemetryservice.Repo, ratingGateway ratingGateway, metadataGateway metadataGateway) *Controller {
 	return &Controller{
+		telem:           telem,
 		ratingGateway:   ratingGateway,
 		metadataGateway: metadataGateway,
 	}
