@@ -3,8 +3,10 @@ package telemetryservice
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/mesameen/micro-app/src/pkg/logger"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -30,13 +32,31 @@ func newLoggerProvider(ctx context.Context, res *resource.Resource) (*log.Logger
 
 // NewMeterProvider creates a new meter provider with the OTLP grpc exporter
 func newMeterProvider(ctx context.Context, res *resource.Resource) (*metric.MeterProvider, error) {
-	exporter, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithEndpoint("localhost:4317"), otlpmetricgrpc.WithInsecure())
+	exporter, err := otlpmetricgrpc.New(ctx,
+		otlpmetricgrpc.WithEndpoint("localhost:4317"),
+		otlpmetricgrpc.WithInsecure(),
+	)
 	if err != nil {
-		logger.Errorf("Failed to create otlpmetricgrpc exporter. Error: %v", err)
+		logger.Errorf("Failed to create OTLP metric exporter: %v", err)
 		return nil, err
 	}
-	reader := metric.NewPeriodicReader(exporter)
-	mp := metric.NewMeterProvider(metric.WithReader(reader), metric.WithResource(res))
+
+	reader := metric.NewPeriodicReader(exporter, metric.WithInterval(5*time.Second))
+
+	mp := metric.NewMeterProvider(
+		metric.WithReader(reader),
+		metric.WithResource(res),
+	)
+
+	// Start Go runtime metrics collection
+	if err := runtime.Start(
+		runtime.WithMeterProvider(mp),
+		runtime.WithMinimumReadMemStatsInterval(5*time.Second),
+	); err != nil {
+		logger.Errorf("Failed to start Go runtime instrumentation: %v", err)
+		return nil, err
+	}
+
 	return mp, nil
 }
 

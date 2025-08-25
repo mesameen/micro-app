@@ -19,9 +19,9 @@ import (
 // Repo is a telemetry provider
 type Repo interface {
 	GetServiceName() string
-	Infof(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
-	Fatalf(format string, args ...interface{})
+	Infof(ctx context.Context, format string, args ...interface{})
+	Errorf(ctx context.Context, format string, args ...interface{})
+	Fatalf(ctx context.Context, format string, args ...interface{})
 	TraceStart(ctx context.Context, name string) (context.Context, oteltrace.Span)
 	MeterInt64UpDownCounter(metric Metric) (otelmetric.Int64UpDownCounter, error)
 	MeterInt64Histogram(metric Metric) (otelmetric.Int64Histogram, error)
@@ -44,12 +44,14 @@ func NewTelemetry(ctx context.Context, serviceName string, serviceVersion string
 		logger.Errorf("Failed to create logger provider. Error: %v", err)
 		return nil, fmt.Errorf("failed to create logger provider: %w", err)
 	}
+
 	zapLogger := zap.New(
 		zapcore.NewTee(
 			zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), zapcore.AddSync(os.Stdout), zapcore.InfoLevel),
 			otelzap.NewCore(serviceName, otelzap.WithLoggerProvider(lp)),
 		),
 	)
+
 	mp, err := newMeterProvider(ctx, res)
 	if err != nil {
 		logger.Errorf("Failed to create metrics provider. Error: %v", err)
@@ -77,17 +79,20 @@ func (s *Service) GetServiceName() string {
 }
 
 // Infof logs at INFO level
-func (s *Service) Infof(format string, args ...interface{}) {
-	s.log.Infof(format, args)
+func (s *Service) Infof(ctx context.Context, format string, args ...interface{}) {
+	spanCtx := oteltrace.SpanContextFromContext(ctx)
+	s.log.With("trace_id", spanCtx.TraceID()).With("span_id", spanCtx.SpanID()).Infof(format, args)
 }
 
 // Errorf logs at ERROR level
-func (s *Service) Errorf(format string, args ...interface{}) {
-	s.log.Errorf(format, args)
+func (s *Service) Errorf(ctx context.Context, format string, args ...interface{}) {
+	spanCtx := oteltrace.SpanContextFromContext(ctx)
+	s.log.With("trace_id", spanCtx.TraceID()).With("span_id", spanCtx.SpanID()).Errorf(format, args)
 }
 
-func (s *Service) Fatalf(format string, args ...interface{}) {
-	s.log.Fatalf(format, args...)
+func (s *Service) Fatalf(ctx context.Context, format string, args ...interface{}) {
+	spanCtx := oteltrace.SpanContextFromContext(ctx)
+	s.log.With("trace_id", spanCtx.TraceID()).With("span_id", spanCtx.SpanID()).Fatalf(format, args...)
 }
 
 // TraceStart starts a new span with a given name. The span must be ended by calling End

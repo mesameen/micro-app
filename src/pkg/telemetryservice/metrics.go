@@ -20,3 +20,8 @@ var MetricRequestInFlight = Metric{
 	Unit:        "{count}",
 	Description: "Measures the no of requests currently handling by server",
 }
+
+var CounterMetric = Metric{
+	Name: "api_calls",
+	Unit: "{count}",
+}

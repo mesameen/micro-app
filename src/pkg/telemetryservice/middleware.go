@@ -1,6 +1,7 @@
 package telemetryservice
 
 import (
+	"context"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -11,16 +12,16 @@ import (
 // LogRequest is a gin middleware that logs the request path
 func (s *Service) LogRequest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		s.Infof("request to: %s", ctx.Request.URL.Path)
+		s.Infof(ctx.Request.Context(), "request to: %s", ctx.Request.URL.Path)
 		ctx.Next()
-		s.Infof("end of request to: %s", ctx.Request.URL.Path)
+		s.Infof(ctx.Request.Context(), "end of request to: %s", ctx.Request.URL.Path)
 	}
 }
 
 func (s *Service) MeterRequestDuration() gin.HandlerFunc {
 	histogram, err := s.MeterInt64Histogram(MetricRequestDurationMilliSec)
 	if err != nil {
-		s.Fatalf("failed to create histogram: %w", err)
+		s.Fatalf(context.Background(), "failed to create histogram: %w", err)
 	}
 	return func(ctx *gin.Context) {
 		// capturing the request start time
@@ -41,7 +42,7 @@ func (s *Service) MeterRequestDuration() gin.HandlerFunc {
 func (s *Service) MeterRequestsInFlight() gin.HandlerFunc {
 	counter, err := s.MeterInt64UpDownCounter(MetricRequestInFlight)
 	if err != nil {
-		s.Fatalf("failed to create counter: %w", err)
+		s.Fatalf(context.Background(), "failed to create counter: %w", err)
 	}
 	return func(ctx *gin.Context) {
 		attrs := metric.WithAttributes(httpconv.ServerRequest(s.GetServiceName(), ctx.Request)...)
